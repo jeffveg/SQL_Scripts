@@ -1,0 +1,104 @@
+/********************************************************************************************************************************
+*********************************************************************************************************************************
+*	WARNING THIS WILL DELETE ALL DATA IN A DATABASE. A RESTORE FROM BACKUP IS THE ONLY WAY TO GET THE DATA BACK!!!!!!!	*
+*	USE EXTREME CAUTION - YOU WILL NEEED TO REMOVE THE COMMENTS								*
+*********************************************************************************************************************************
+********************************************************************************************************************************/
+
+
+drop table #temp
+CREATE TABLE #Temp ([Name] varchar(100),[Rows] int, reserved varchar(30),data varchar(30),index_Size varchar(100),unused varchar(30))
+insert into #temp
+exec sp_msforeachtable 'sp_Spaceused "?"'
+
+
+select  * from #temp order by cast(left(Reserved,len(reserved)-3) as int) desc
+
+go
+
+--Truncate tables
+
+DECLARE TblName CURSOR
+READ_ONLY
+FOR 
+	Select 
+		name
+	from 
+		sysobjects o
+		left join sysforeignkeys k on
+			o.id = k.rkeyid
+	where 
+		o.xtype = 'U'
+		and k.constid is null
+
+
+DECLARE @name nvarchar(40)
+OPEN TblName
+
+FETCH NEXT FROM TblName INTO @name
+WHILE (@@fetch_status <> -1)
+BEGIN
+	IF (@@fetch_status <> -2)
+	BEGIN
+		DECLARE @message nvarchar(100)
+		SELECT @message = 'Truncate Table ' + @name
+		PRINT @message
+-- Danger this will delete data		exec sp_executesql @message
+	END
+	FETCH NEXT FROM TblName INTO @name
+END
+
+CLOSE TblName
+DEALLOCATE TblName
+
+-- Delete any with Foreign Keys
+
+--Truncate tables
+
+DECLARE TblName CURSOR
+READ_ONLY
+FOR 
+	Select 
+		name
+	from 
+		sysobjects o
+		join sysforeignkeys k on
+			o.id = k.rkeyid
+	where 
+		o.xtype = 'U'
+
+
+
+
+OPEN TblName
+
+FETCH NEXT FROM TblName INTO @name
+WHILE (@@fetch_status <> -1)
+BEGIN
+	IF (@@fetch_status <> -2)
+	BEGIN
+		SELECT @message = 'Delete ' + @name
+		PRINT @message
+-- Danger this will delete data		exec sp_executesql @message 
+	END
+	FETCH NEXT FROM TblName INTO @name
+END
+
+CLOSE TblName
+DEALLOCATE TblName
+
+print 'Shrinking database'
+
+
+ SELECT top 1 @message = 'DBCC SHRINKDATABASE(  ' + TABLE_CATALOG + ',90  )' FROM  Information_Schema.tables
+exec sp_executesql @message
+
+
+drop table #temp
+CREATE TABLE #Temp ([Name] varchar(100),[Rows] int, reserved varchar(30),data varchar(30),index_Size varchar(100),unused varchar(30))
+insert into #temp
+exec sp_msforeachtable 'sp_Spaceused "?"'
+
+
+select  * from #temp order by cast(left(Reserved,len(reserved)-3) as int) desc
+
