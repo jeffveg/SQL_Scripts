@@ -27,9 +27,9 @@ SELECT
   , remote_machine_name
   , role_desc
   , internal_state_desc
-  , master.dbo.udf_Chameleon_Int(transfer_rate_bytes_per_second) transfer_rate_bytes_per_second
-  , master.dbo.udf_Chameleon_Int(transferred_size_bytes/1024/1024) transferred_size_MB
-  , master.dbo.udf_Chameleon_Int(database_size_bytes/1024/1024) database_size_MB
+  , transfer_rate_bytes_per_second transfer_rate_bytes_per_second
+  , transferred_size_bytes/1024/1024 transferred_size_MB
+  , database_size_bytes/1024/1024 database_size_MB
   , cast((transferred_size_bytes / cast(database_size_bytes as decimal(19,2))) * 100 as money) PcentDone
   , start_time_utc
   --, end_time_utc
