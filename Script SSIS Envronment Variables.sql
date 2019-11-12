@@ -1,6 +1,12 @@
+/*
+drop table #env_var
+drop table #cmd
+*/
+
+
 declare  @folder sysname, @env sysname
-SET @folder = ''
-SET @env = ''
+SET @folder = 'BMSSSIS'
+SET @env = 'LOCAL'
 
         SET NOCOUNT ON;
         DECLARE @project_id int,
@@ -41,13 +47,19 @@ SET @env = ''
                 Generate the variable declarations at the "top" this makes it easier to replace/update the values
                 The variable names here map to the name of the variable being created
         */
-        SELECT [env_var] = @tab + @tab + ', @' + ev.name + ' '  + ev.base_data_type  + '= N''' + ISNULL(CONVERT(varchar(max), ev.value), '<REPLACE_ME>') + ''''
+     
+
+	    SELECT [env_var] = @tab + @tab + ', @' + ev.name + ' '  + ev.base_data_type  + '= N''' + ISNULL(CONVERT(varchar(max), ev.value), '<REPLACE_ME>') + ''''
                         , [name] = ev.name
         INTO #env_var
         FROM [SSISDB].[catalog].[folders] f
         INNER JOIN [SSISDB].[catalog].[environments] e ON f.folder_id =  e.folder_id
         INNER JOIN [SSISDB].[internal].[environment_variables] ev ON e.environment_id = ev.environment_id
         WHERE (f.name = @folder) AND (e.name = @env);
+
+		/* Below is because it defaulting to nvarchar(1) */
+		update #env_var set env_var = replace(env_var,' nvarchar= ', ' nvarchar(1000)= ')
+
         /*
                 Yes, I am looping here.  We don't know how many variables, sql_variant can be up to 8,000 bytes for the base type
                 and don't want to be limited trying to print varchar(max) to the output window
@@ -91,6 +103,9 @@ SET @env = ''
         INNER JOIN [SSISDB].[catalog].[environments] e ON f.folder_id =  e.folder_id
         INNER JOIN [SSISDB].[catalog].[environment_variables] ev ON e.environment_id = ev.environment_id
         WHERE (f.name = @folder) AND (e.name = @env);
+ 
+
+ 
         /*Print out the variable creation procs */
         WHILE EXISTS (SELECT TOP 1 1 FROM #cmd)
         BEGIN
