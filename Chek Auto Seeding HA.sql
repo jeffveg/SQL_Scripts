@@ -59,8 +59,8 @@ FROM
 /*
 dbcc traceon (9567,-1)
 
-ALTER AVAILABILITY GROUP [us-sv-dw] 
-    MODIFY REPLICA ON 'us-sv-dw05' 
+ALTER AVAILABILITY GROUP ag01 
+    MODIFY REPLICA ON 'dbstage2' 
     WITH (SEEDING_MODE = AUTOMATIC)
 
 */
