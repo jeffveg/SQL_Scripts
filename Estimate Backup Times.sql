@@ -11,8 +11,7 @@ session_id as SPID
 , r.wait_type
 FROM sys.dm_exec_requests r 
 CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) a
-WHERE 1=1 
-and r.command in ('BACKUP DATABASE','BACKUP LOG','RESTORE DATABASE') 
+WHERE r.percent_complete > 0
 
 
 SELECT r.session_id,r.command,CONVERT(NUMERIC(6,2),r.percent_complete)
@@ -23,4 +22,4 @@ CONVERT(NUMERIC(10,2),r.estimated_completion_time/1000.0/60.0/60.0) AS [ETA Hour
 CONVERT(VARCHAR(1000),(SELECT SUBSTRING(text,r.statement_start_offset/2,
 CASE WHEN r.statement_end_offset = -1 THEN 1000 ELSE (r.statement_end_offset-r.statement_start_offset)/2 END)
 FROM sys.dm_exec_sql_text(sql_handle))) AS [SQL]
-FROM sys.dm_exec_requests r WHERE command IN ('RESTORE DATABASE','BACKUP DATABASE')
+FROM sys.dm_exec_requests r WHERE r.percent_complete > 0
